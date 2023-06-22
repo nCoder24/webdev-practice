@@ -1,0 +1,50 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 20px;
+}
+
+body {
+  background-color: #29313c;
+  color: white;
+}
+
+.page {
+  width: 50em;
+  margin: 2em auto;
+  padding: 1em;
+  background-color: #18202b;
+  border: 3px solid #3f4955;
+  box-shadow: 10px 10px 1px #6c7584;
+}
+
+.content {
+  padding-bottom: 1em;
+  border-bottom: 3px solid #6c7584;
+}
+
+.content-heading {
+  margin: 0.5em 0;
+  font-weight: 600;
+}
+
+.float-box {
+  height: 10em;
+  aspect-ratio: 1;
+  background-color: #323947;
+  border: 2px solid #40506d;
+  margin: 0.2em 1em 0.5em 0em;
+  float: left;
+}
+
+.square {
+  height: 10em;
+  aspect-ratio: 1;
+}
+
+.circle {
+  border-radius: 50%;
+  shape-outside: margin-box circle();
+}
