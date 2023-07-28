@@ -29,6 +29,7 @@
     </style>
     <script>
       const findDepth = (node) => {
+        console.log(node)
         if (node.children.length === 0) return 1;
         return 1 + Math.max(...Array.from(node.children).map(findDepth));
       };
