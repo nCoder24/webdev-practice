@@ -16,45 +16,21 @@ const parseHttpRequest = (requestText) => {
 class HttpServer {
   #tcpServer;
   #handlers;
-  #defaultHandler;
-  #badRequestHandler;
-  #invalidMethodHandler;
+  #validator;
 
   constructor(server) {
     this.#tcpServer = server;
     this.#handlers = [];
   }
 
-  #validate(request, response) {
-    if (request.protocol !== "HTTP/1.1" || !("user-agent" in request.headers)) {
-      this.#badRequestHandler(request, response);
-      return false;
-    }
-
-    if (request.method !== "GET") {
-      this.#invalidMethodHandler(request, response);
-      return false;
-    }
-
-    return true;
-  }
-
   #handle(request, response) {
-    const isValid = this.#validate(request, response);
+    const matchPattern = ({ uriPattern }) => uriPattern.test(request.uri);
+
+    const isValid = this.#validator(request, response);
     if (!isValid) return;
 
-    const matchPattern = ({ uriPattern }) => {
-      return request.uri.match(new RegExp(`^${uriPattern}$`));
-    };
-
     const handler = this.#handlers.find(matchPattern);
-
-    if (handler) {
-      handler.callback(request, response);
-      return;
-    }
-
-    this.#defaultHandler(request, response);
+    handler.callback(request, response);
   }
 
   start(port) {
@@ -74,19 +50,14 @@ class HttpServer {
   }
 
   registerHandler(uriPattern, callback) {
-    this.#handlers.push({ uriPattern, callback });
+    this.#handlers.push({
+      uriPattern: new RegExp(`^${uriPattern}$`),
+      callback,
+    });
   }
 
-  registerDefaultHandler(handler) {
-    this.#defaultHandler = handler;
-  }
-
-  registerBadRequestHandler(handler) {
-    this.#badRequestHandler = handler;
-  }
-
-  registerInvalidRequestHandler(handler) {
-    this.#invalidMethodHandler = handler;
+  registerValidator(validator) {
+    this.#validator = validator;
   }
 }
 
