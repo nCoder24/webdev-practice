@@ -8,20 +8,38 @@ const RESULTS = {
 };
 
 const parseHttpRequest = (request) => {
-  const [requestLine, headers] = request.trim().split("\n");
+  const [requestLine, ...headersTexts] = request.trim().split("\r\n");
+  const headers = Object.fromEntries(
+    headersTexts.map((headerText) => {
+      const [key, value] = headerText.split(":");
+      return [key.trim().toLowerCase(), value.trim()];
+    })
+  );
+
   const [method, uri, protocol] = requestLine.trim().split(" ");
 
-  return { method, uri, protocol };
+  return { method, uri, protocol, headers };
 };
 
 const generateHttpResponse = ({
   protocol = "HTTP/1.1",
   statusCode = 200,
-  body,
+  content = "",
+  headers = {},
 }) => {
   const result = RESULTS[statusCode];
   const statusLine = [protocol, statusCode, result].join(" ");
-  return [statusLine, body].join("\n\n");
+
+  const primaryHeaders = {
+    date: new Date().toGMTString(),
+    "content-length": content.length,
+  };
+
+  const headerLines = Object.entries({ ...primaryHeaders, ...headers })
+    .map((header) => header.join(": ") + "\r\n")
+    .join("");
+
+  return `${statusLine}\n${headerLines}\n${content}`;
 };
 
 class HttpServer {
@@ -37,7 +55,7 @@ class HttpServer {
   }
 
   #validate(request) {
-    if (request.protocol !== "HTTP/1.1") {
+    if (request.protocol !== "HTTP/1.1" || !("user-agent" in request.headers)) {
       return this.#badRequestHandler(request);
     }
 
@@ -95,34 +113,26 @@ class HttpServer {
 const main = () => {
   const app = new HttpServer(new Server());
 
-  app.registerHandler("/ping", () => ({ body: "pong" }));
+  app.registerHandler("/", () => ({ content: "home" }));
+  app.registerHandler("/ping", () => ({ content: "pong" }));
+  app.registerHandler("/echo", () => ({ content: "echo" }));
   app.registerHandler("/echo/.*", ({ uri }) => {
-    const [_, content] = uri.match(/\/echo\/(.*)/);
-    return {
-      body: content,
-    };
+    const [, content] = uri.match(/\/echo\/(.*)/);
+    return { content };
   });
-
-  app.registerHandler("/echo", () => {
-    return {
-      body: "echo",
-    };
-  });
-
-  app.registerHandler("/", () => ({ body: "home" }));
 
   app.registerDefaultHandler(({ uri }) => ({
-    body: `${uri} not found`,
+    content: `${uri} not found`,
     statusCode: 404,
   }));
 
   app.registerBadRequestHandler(() => ({
-    body: "bad request",
+    content: "bad request",
     statusCode: 400,
   }));
 
   app.registerInvalidRequestHandler(() => ({
-    body: "method not allowed",
+    content: "method not allowed",
     statusCode: 405,
   }));
 
