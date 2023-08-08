@@ -2,6 +2,7 @@ const { HttpResponse } = require("./http-response");
 
 const parseHttpRequest = (requestText) => {
   const [requestLine, ...headersTexts] = requestText.trim().split("\r\n");
+
   const headers = Object.fromEntries(
     headersTexts.map((headerText) => {
       const [key, value] = headerText.split(":");
@@ -16,7 +17,6 @@ const parseHttpRequest = (requestText) => {
 class HttpServer {
   #tcpServer;
   #handlers;
-  #validator;
 
   constructor(server) {
     this.#tcpServer = server;
@@ -24,13 +24,17 @@ class HttpServer {
   }
 
   #handle(request, response) {
-    const matchPattern = ({ uriPattern }) => uriPattern.test(request.uri);
+    const matchPattern = ({ pattern }) => pattern.test(request.uri);
+    const handlers = this.#handlers.filter(matchPattern).values();
 
-    const isValid = this.#validator(request, response);
-    if (!isValid) return;
+    const next = () => {
+      const currentHandler = handlers.next().value;
+      if (currentHandler) {
+        currentHandler.callback(request, response, next);
+      }
+    };
 
-    const handler = this.#handlers.find(matchPattern);
-    handler.callback(request, response);
+    next();
   }
 
   start(port) {
@@ -49,15 +53,11 @@ class HttpServer {
     });
   }
 
-  registerHandler(uriPattern, callback) {
+  registerHandler(pattern, callback) {
     this.#handlers.push({
-      uriPattern: new RegExp(`^${uriPattern}$`),
+      pattern: new RegExp(`^${pattern}$`),
       callback,
     });
-  }
-
-  registerValidator(validator) {
-    this.#validator = validator;
   }
 }
 

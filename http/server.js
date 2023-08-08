@@ -23,8 +23,8 @@ const serveEchoChildPage = (req, res) => {
 };
 
 const responseNotFoundError = ({ uri }, res) => {
-  res.status(404);
   res.body(`${uri} not found`);
+  res.status(404);
   res.end();
 };
 
@@ -40,29 +40,44 @@ const responseInvalidRequest = (req, res) => {
   res.end();
 };
 
-const validator = (req, res) => {
-  if (req.protocol !== "HTTP/1.1" || !("user-agent" in req.headers)) {
+const validateProtocol = (req, res, next) => {
+  if (req.protocol !== "HTTP/1.1") {
     responseBadRequest(req, res);
-    return false;
+    return;
   }
 
+  next();
+};
+
+const validateHeaders = (req, res, next) => {
+  if (!("user-agent" in req.headers)) {
+    responseBadRequest(req, res);
+    return;
+  }
+
+  next();
+};
+
+const validateMethod = (req, res, next) => {
   if (req.method !== "GET") {
     responseInvalidRequest(req, res);
-    return false;
+    return;
   }
 
-  return true;
+  next();
 };
 
 const main = () => {
   const app = new HttpServer(new Server());
 
+  app.registerHandler(".*", validateHeaders);
+  app.registerHandler(".*", validateProtocol);
+  app.registerHandler(".*", validateMethod);
   app.registerHandler("/", serveHomePage);
   app.registerHandler("/ping", servePingPage);
   app.registerHandler("/echo", serveEchoHomePage);
-  app.registerHandler("/echo/.*", serveEchoChildPage);
+  app.registerHandler("/echo/(.*)", serveEchoChildPage);
   app.registerHandler(".*", responseNotFoundError);
-  app.registerValidator(validator);
 
   app.start(8000);
 };
