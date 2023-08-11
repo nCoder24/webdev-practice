@@ -28,9 +28,9 @@ class HttpServer {
     const handlers = this.#handlers.filter(matchPattern).values();
 
     const next = () => {
-      const currentHandler = handlers.next().value;
-      if (currentHandler) {
-        currentHandler.callback(request, response, next);
+      const handler = handlers.next().value;
+      if (handler) {
+        handler.callback(request, response, next);
       }
     };
 
