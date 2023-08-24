@@ -4,10 +4,11 @@ const sendUsers = (req, res) => {
 };
 
 const addUser = (req, res) => {
-  const users = req.app.users;
-  
-  users.add(req.body.username);
+  const { users } = req.app;
+  const { username } = req.body;
+
+  users.add(username);
   res.status(201).end();
-}
+};
 
 module.exports = { sendUsers, addUser };

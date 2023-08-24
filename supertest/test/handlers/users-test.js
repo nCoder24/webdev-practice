@@ -1,6 +1,6 @@
 const request = require("supertest");
 const { describe, it } = require("node:test");
-const { createApp } = require("../../src/app");
+const { setupApp } = require("../../src/app");
 const assert = require("assert");
 const { AssertionError } = require("assert");
 
@@ -12,7 +12,7 @@ describe("Users", () => {
   describe("GET /users", () => {
     it("should get the users", (_, done) => {
       const users = new Set(["utsab", "raj"]);
-      const app = createApp(users);
+      const app = setupApp(users);
       request(app)
         .get("/users")
         .expect(200)
@@ -25,7 +25,7 @@ describe("Users", () => {
   describe("POST /users", () => {
     it("should add the users", (_, done) => {
       const users = new Set();
-      const app = createApp(users);
+      const app = setupApp(users);
       request(app)
         .post("/users")
         .send({username: "raj"})
