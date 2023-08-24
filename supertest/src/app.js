@@ -1,11 +1,11 @@
 const express = require("express");
+const { sendUsers } = require("./handlers/users");
 
-const createApp = () => {
+const createApp = (users) => {
   const app = new express();
+  app.users = users;
 
-  app.get("/", (_req, res) => {
-    res.send("<h1>Hello</h1>");
-  });
+  app.get("/users", sendUsers);
   
   return app;
 };
